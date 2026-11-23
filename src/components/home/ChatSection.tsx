@@ -6,6 +6,11 @@ import Link from 'next/link';
 export const ChatSection: React.FC = () => {
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = React.useState(false);
+  const [activeStep, setActiveStep] = React.useState(0);
+  const [isTyping, setIsTyping] = React.useState(false);
+  const [isMobile, setIsMobile] = React.useState(false);
+  const stepsRef = React.useRef<HTMLOListElement>(null);
+  const lastStepRef = React.useRef(0);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -18,6 +23,49 @@ export const ChatSection: React.FC = () => {
     }
   };
 
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  React.useEffect(() => {
+    if (isMobile || !stepsRef.current) return;
+    const children = Array.from(stepsRef.current.children);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const idx = children.indexOf(entry.target);
+            if (idx !== -1) {
+              setActiveStep(idx);
+            }
+          }
+        }
+      },
+      { rootMargin: '-25% 0px -50% 0px', threshold: 0.2 }
+    );
+
+    children.forEach((c) => observer.observe(c));
+    return () => observer.disconnect();
+  }, [isMobile]);
+
+  React.useEffect(() => {
+    if (isMobile) return;
+    if (activeStep > lastStepRef.current) {
+      setIsTyping(true);
+      const timer = setTimeout(() => {
+        setIsTyping(false);
+      }, 750);
+      lastStepRef.current = activeStep;
+      return () => clearTimeout(timer);
+    }
+    lastStepRef.current = activeStep;
+  }, [activeStep, isMobile]);
+
+  const currentStep = isMobile ? 2 : activeStep;
+
   return (
 <section aria-labelledby="journey-title" className="tp-scene tp-chat" data-pup-scene="true" data-tone="light" style={{ "--sky-top": "#f7d18d", "--sky-bottom": "#f0b866" } as React.CSSProperties}>
  <div className="tp-chat__grid gutter" data-pin-range="true">
@@ -28,8 +76,8 @@ export const ChatSection: React.FC = () => {
    <p className="text-lede mt-5 max-w-[42ch] text-[var(--ink-soft)]">
     A premium, step-by-step concierge experience. We make adoption simple, secure, and purely joyful.
    </p>
-   <ol className="tp-chat__steps">
-    <li className="tp-chat__step" data-done="true">
+   <ol ref={stepsRef} className="tp-chat__steps">
+    <li className="tp-chat__step" data-active={currentStep === 0 ? "true" : undefined} data-done={currentStep > 0 ? "true" : undefined}>
      <span aria-hidden="true" className="tp-chat__num font-plush">
       1
      </span>
@@ -40,7 +88,7 @@ export const ChatSection: React.FC = () => {
       Select your preferred breed or tell us what you're looking for. We'll guide you based on availability and your lifestyle.
      </p>
     </li>
-    <li className="tp-chat__step" data-done="true">
+    <li className="tp-chat__step" data-active={currentStep === 1 ? "true" : undefined} data-done={currentStep > 1 ? "true" : undefined}>
      <span aria-hidden="true" className="tp-chat__num font-plush">
       2
      </span>
@@ -51,7 +99,7 @@ export const ChatSection: React.FC = () => {
       Our team will share real photos, health details, and all necessary information directly on WhatsApp.
      </p>
     </li>
-    <li className="tp-chat__step" data-active="true">
+    <li className="tp-chat__step" data-active={currentStep === 2 ? "true" : undefined} data-done={currentStep > 2 ? "true" : undefined}>
      <span aria-hidden="true" className="tp-chat__num font-plush">
       3
      </span>
@@ -75,16 +123,14 @@ export const ChatSection: React.FC = () => {
       <span className="tp-phone__name">
        TeddyPups U.A.E.
       </span>
-      <span className="tp-phone__status">
-       online
-      </span>
+      <span className="tp-phone__status">{isTyping ? "typing…" : "online"}</span>
      </span>
     </div>
     <div className="tp-phone__screen">
      <p className="tp-msg tp-msg--me">
       Hi TeddyPups! I'd love to know more about your puppies.
      </p>
-     <div className="tp-msg-group" data-show="true" data-step="0">
+     <div className="tp-msg-group" data-show={currentStep >= 0 && (!isTyping || currentStep > 0) ? "true" : "false"} data-step="0">
       <div className="tp-msg tp-msg--them">
        <p>
         Select your preferred breed or tell us what you're looking for. We'll guide you based on availability and your lifestyle.
@@ -118,7 +164,7 @@ export const ChatSection: React.FC = () => {
        </ul>
       </div>
      </div>
-     <div className="tp-msg-group" data-show="true" data-step="1">
+     <div className="tp-msg-group" data-show={currentStep >= 1 && (!isTyping || currentStep > 1) ? "true" : "false"} data-step="1">
       <div className="tp-msg tp-msg--them tp-msg--media">
        <div className="tp-snaps">
         <span className="tp-snaps__one">
@@ -154,7 +200,7 @@ export const ChatSection: React.FC = () => {
        Our team will share real photos, health details, and all necessary information directly on WhatsApp.
       </p>
      </div>
-     <div className="tp-msg-group" data-show="true" data-step="2">
+     <div className="tp-msg-group" data-show={currentStep >= 2 && !isTyping ? "true" : "false"} data-step="2">
       <div className="tp-msg tp-msg--them">
        <p>
         Once confirmed, we handle everything professionally and ensure your puppy reaches you safely and stress-free.
@@ -175,7 +221,7 @@ export const ChatSection: React.FC = () => {
        </svg>
       </div>
      </div>
-     <p aria-hidden="true" className="tp-typing" data-show="false">
+     <p aria-hidden="true" className="tp-typing" data-show={isTyping ? "true" : "false"}>
       <span>
       </span>
       <span>

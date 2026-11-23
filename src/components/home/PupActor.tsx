@@ -1,14 +1,152 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 export const PupActor: React.FC = () => {
+  const actorRef = useRef<HTMLDivElement>(null);
+  const printsRef = useRef<HTMLDivElement>(null);
+  const legsRef = useRef<{
+    bf: SVGGElement | null;
+    ff: SVGGElement | null;
+    bn: SVGGElement | null;
+    fn: SVGGElement | null;
+  }>({ bf: null, ff: null, bn: null, fn: null });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const actor = actorRef.current;
+    if (!actor) return;
+
+    const rootSvg = actor.querySelector('svg');
+    if (rootSvg) {
+      legsRef.current.bf = rootSvg.querySelector('[data-p="bf"]');
+      legsRef.current.ff = rootSvg.querySelector('[data-p="ff"]');
+      legsRef.current.bn = rootSvg.querySelector('[data-p="bn"]');
+      legsRef.current.fn = rootSvg.querySelector('[data-p="fn"]');
+      const body = rootSvg.querySelector('[data-p="body"]') as SVGGElement | null;
+      if (body) {
+        body.setAttribute('opacity', '1');
+      }
+      const shadow = rootSvg.querySelector('[data-p="shadow"]') as SVGEllipseElement | null;
+      if (shadow) {
+        shadow.setAttribute('opacity', '0.22');
+      }
+    }
+
+    let lastScrollY = window.scrollY;
+    let stepCount = 0;
+    let printIndex = 0;
+    let lastPrintY = window.scrollY;
+
+    const printsContainer = printsRef.current;
+    const printSvgs = printsContainer ? Array.from(printsContainer.querySelectorAll('svg')) : [];
+
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? Math.min(Math.max(scrollY / docHeight, 0), 1) : 0;
+      const delta = scrollY - lastScrollY;
+      lastScrollY = scrollY;
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      let targetX = vw * 0.82;
+      let targetY = vh - 220;
+      let targetScale = 0.68;
+      let facingRight = false;
+      let poseAngle = 0;
+
+      if (progress < 0.12) {
+        targetX = vw * 0.82;
+        targetY = vh - 210;
+        facingRight = false;
+      } else if (progress < 0.28) {
+        const p = (progress - 0.12) / 0.16;
+        targetX = vw * (0.82 - p * 0.65);
+        targetY = vh - 230;
+        facingRight = false;
+      } else if (progress < 0.45) {
+        const p = (progress - 0.28) / 0.17;
+        targetX = vw * (0.17 + p * 0.15);
+        targetY = vh - 220;
+        facingRight = true;
+        poseAngle = 5;
+      } else if (progress < 0.62) {
+        targetX = vw * 0.72;
+        targetY = vh * 0.55;
+        targetScale = 0.62;
+        facingRight = false;
+      } else if (progress < 0.78) {
+        targetX = vw * 0.25;
+        targetY = vh - 240;
+        targetScale = 0.65;
+        facingRight = true;
+      } else if (progress < 0.90) {
+        targetX = vw * 0.68;
+        targetY = vh - 210;
+        targetScale = 0.65;
+        facingRight = false;
+      } else {
+        const p = (progress - 0.90) / 0.10;
+        targetX = vw * (0.50 + (1 - p) * 0.15);
+        targetY = vh - 180 - p * 40;
+        targetScale = 0.65 * (1 - p * 0.5);
+        facingRight = true;
+      }
+
+      if (Math.abs(delta) > 0.8) {
+        stepCount += Math.abs(delta) * 0.12;
+        const legAngle = Math.sin(stepCount) * 22;
+
+        if (legsRef.current.bf) legsRef.current.bf.setAttribute('transform', `translate(94 192) rotate(${-legAngle})`);
+        if (legsRef.current.ff) legsRef.current.ff.setAttribute('transform', `translate(168 192) rotate(${legAngle})`);
+        if (legsRef.current.bn) legsRef.current.bn.setAttribute('transform', `translate(110 194) rotate(${legAngle})`);
+        if (legsRef.current.fn) legsRef.current.fn.setAttribute('transform', `translate(186 194) rotate(${-legAngle})`);
+
+        if (Math.abs(scrollY - lastPrintY) > 70 && printSvgs.length > 0) {
+          lastPrintY = scrollY;
+          const svg = printSvgs[printIndex % printSvgs.length];
+          printIndex++;
+          svg.style.position = 'fixed';
+          svg.style.left = `${targetX + (facingRight ? 40 : 120)}px`;
+          svg.style.top = `${targetY + 110}px`;
+          svg.style.width = '24px';
+          svg.style.height = '24px';
+          svg.style.opacity = '0.35';
+          svg.style.transition = 'opacity 1.2s ease-out';
+          setTimeout(() => {
+            svg.style.opacity = '0';
+          }, 400);
+        }
+      } else {
+        if (legsRef.current.bf) legsRef.current.bf.setAttribute('transform', `translate(94 192) rotate(0)`);
+        if (legsRef.current.ff) legsRef.current.ff.setAttribute('transform', `translate(168 192) rotate(0)`);
+        if (legsRef.current.bn) legsRef.current.bn.setAttribute('transform', `translate(110 194) rotate(0)`);
+        if (legsRef.current.fn) legsRef.current.fn.setAttribute('transform', `translate(186 194) rotate(0)`);
+      }
+
+      const flip = facingRight ? 1 : -1;
+      actor.style.transform = `translate3d(${targetX.toFixed(1)}px, ${targetY.toFixed(1)}px, 0) scale(${targetScale * flip}, ${targetScale}) rotate(${poseAngle}deg)`;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll);
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, []);
+
   return (
     <>
 <div aria-hidden="true" className="pup-probe">
 </div>
 
-<div aria-hidden="true" className="pup-prints">
+<div ref={printsRef} aria-hidden="true" className="pup-prints">
  <svg viewBox="0 0 64 64">
   <path d="M32 30.5c-7.6 0-15.6 8.3-15.6 15.5 0 5.4 4.2 8.3 9.2 8.3 2.6 0 4.5-1.1 6.4-1.1s3.8 1.1 6.4 1.1c5 0 9.2-2.9 9.2-8.3 0-7.2-8-15.5-15.6-15.5zM19.28 26.71C21.07 30.08 20.42 33.92 17.84 35.29C15.25 36.67 11.71 35.05 9.92 31.69C8.13 28.32 8.78 24.48 11.36 23.11C13.95 21.73 17.49 23.35 19.28 26.71ZM29.62 15.64C30.32 19.62 28.46 23.26 25.47 23.79C22.48 24.32 19.48 21.53 18.78 17.56C18.08 13.58 19.94 9.94 22.93 9.41C25.92 8.88 28.92 11.67 29.62 15.64ZM45.22 17.56C44.52 21.53 41.52 24.32 38.53 23.79C35.54 23.26 33.68 19.62 34.38 15.64C35.08 11.67 38.08 8.88 41.07 9.41C44.06 9.94 45.92 13.58 45.22 17.56ZM54.08 31.69C52.29 35.05 48.75 36.67 46.16 35.29C43.58 33.92 42.93 30.08 44.72 26.71C46.51 23.35 50.05 21.73 52.64 23.11C55.22 24.48 55.87 28.32 54.08 31.69Z" />
   
@@ -107,8 +245,8 @@ export const PupActor: React.FC = () => {
  </svg>
 </div>
 
-<div aria- className="pup-layer" data-front="true">
- <div className="pup-actor">
+<div aria-hidden="true" className="pup-layer" data-front="true">
+ <div ref={actorRef} className="pup-actor">
   <div className="pup-actor__body">
    <svg aria-hidden="true" focusable="false" style={{ overflow: "visible" } as React.CSSProperties} viewBox="0 0 300 240">
     <g data-p="root">

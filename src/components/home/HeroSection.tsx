@@ -4,6 +4,43 @@ import React from 'react';
 import Link from 'next/link';
 
 export const HeroSection: React.FC = () => {
+  const [pupStates, setPupStates] = React.useState<Record<number, 'duck' | 'pop' | undefined>>({});
+  const [activeTag, setActiveTag] = React.useState<number | null>(null);
+  const [hoveredTag, setHoveredTag] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    let timer: NodeJS.Timeout;
+    const seats = [0, 1, 2, 3, 4, 5];
+    let lastIdx = -1;
+
+    const bobNext = () => {
+      const available = seats.filter((st) => st !== lastIdx);
+      const chosen = available[Math.floor(Math.random() * available.length)];
+      lastIdx = chosen;
+
+      setPupStates((prev) => ({ ...prev, [chosen]: 'duck' }));
+
+      setTimeout(() => {
+        setPupStates((prev) => ({ ...prev, [chosen]: 'pop' }));
+        setActiveTag(chosen);
+
+        setTimeout(() => {
+          setActiveTag((prev) => (prev === chosen ? null : prev));
+        }, 1800);
+
+        setTimeout(() => {
+          setPupStates((prev) => ({ ...prev, [chosen]: undefined }));
+        }, 700);
+      }, 350);
+
+      const nextDelay = 2600 + Math.random() * 1600;
+      timer = setTimeout(bobNext, nextDelay);
+    };
+
+    timer = setTimeout(bobNext, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
 <section aria-labelledby="hero-title" className="tp-scene tp-hero" data-pup-scene="true" data-tone="light" style={{ "--sky-top": "#fffdf8", "--sky-bottom": "#fff1d8", "--quilt": "#fff1d8" } as React.CSSProperties}>
  <span aria-hidden="true" className="tp-hero__sun">
@@ -39,42 +76,42 @@ export const HeroSection: React.FC = () => {
  <div className="tp-hero__stage">
   <ul aria-label="Some of the puppies in our showroom" className="tp-lineup">
    <li className="tp-lineup__seat" style={{ "--x": "9%", "--w": "8.6rem", "--peek": "0.62", "--tilt": "-5deg", "--i": "0" } as React.CSSProperties}>
-    <a aria-label="Meet Max, Maltipoo" className="tp-lineup__pup" data-pup-friend="true" href="/puppies/maltipoo-max-male">
+    <a aria-label="Meet Max, Maltipoo" className="tp-lineup__pup" data-pup-friend="true" data-state={pupStates[0]} onPointerEnter={() => setHoveredTag(0)} onPointerLeave={() => setHoveredTag(null)} onFocus={() => setHoveredTag(0)} onBlur={() => setHoveredTag(null)} href="/puppies/maltipoo-max-male">
      <span className="tp-lineup__photo">
       <img alt="Max, male Maltipoo puppy" loading="eager" sizes="11rem" src="/media/Z0ToauDx7Eve/5fffe4d022/b942a5_4b8cfb8204d24eadaf524332aba1dc15-mv2.webp" style={{ position: "absolute", height: "100%", width: "100%", left: "0", top: "0", right: "0", bottom: "0", objectFit: "cover", objectPosition: "53.8% 44.3%", color: "transparent", backgroundColor: "#785838", backgroundSize: "cover", backgroundPosition: "53.8% 44.3%", backgroundRepeat: "no-repeat" } as React.CSSProperties} />
      </span>
     </a>
    </li>
    <li className="tp-lineup__seat" style={{ "--x": "22.5%", "--w": "10.4rem", "--peek": "0.8", "--tilt": "3deg", "--i": "1" } as React.CSSProperties}>
-    <a aria-label="Meet Korean Teacup Maltipoo, Korean Teacup Maltipoo" className="tp-lineup__pup" data-pup-friend="true" href="/puppies/korean-teacup-maltipoo-female">
+    <a aria-label="Meet Korean Teacup Maltipoo, Korean Teacup Maltipoo" className="tp-lineup__pup" data-pup-friend="true" data-state={pupStates[1]} onPointerEnter={() => setHoveredTag(1)} onPointerLeave={() => setHoveredTag(null)} onFocus={() => setHoveredTag(1)} onBlur={() => setHoveredTag(null)} href="/puppies/korean-teacup-maltipoo-female">
      <span className="tp-lineup__photo">
       <img alt="Female Korean Teacup Maltipoo puppy" loading="eager" sizes="11rem" src="/media/gAaGwoGej2g6/5523e884dd/b942a5_50f0ae67c9ff437d911597d52a9e63b3-mv2.jpg" style={{ position: "absolute", height: "100%", width: "100%", left: "0", top: "0", right: "0", bottom: "0", objectFit: "cover", objectPosition: "52.5% 42.6%", color: "transparent", backgroundColor: "#e8e8e8", backgroundSize: "cover", backgroundPosition: "52.5% 42.6%", backgroundRepeat: "no-repeat" } as React.CSSProperties} />
      </span>
     </a>
    </li>
    <li className="tp-lineup__seat" style={{ "--x": "35%", "--w": "9.2rem", "--peek": "0.7", "--tilt": "-2deg", "--i": "2" } as React.CSSProperties}>
-    <a aria-label="Meet Korean Teacup Poodle, Korean Teacup Poodle" className="tp-lineup__pup" data-pup-friend="true" href="/puppies/korean-teacup-poodle-female">
+    <a aria-label="Meet Korean Teacup Poodle, Korean Teacup Poodle" className="tp-lineup__pup" data-pup-friend="true" data-state={pupStates[2]} onPointerEnter={() => setHoveredTag(2)} onPointerLeave={() => setHoveredTag(null)} onFocus={() => setHoveredTag(2)} onBlur={() => setHoveredTag(null)} href="/puppies/korean-teacup-poodle-female">
      <span className="tp-lineup__photo">
       <img alt="Female Korean Teacup Poodle puppy" loading="eager" sizes="11rem" src="/media/xeMJCapr5vcU/e618c653b2/b942a5_14376a216177484dbbb27995d0f6aeb7-mv2.jpg" style={{ position: "absolute", height: "100%", width: "100%", left: "0", top: "0", right: "0", bottom: "0", objectFit: "cover", objectPosition: "54.5% 45.7%", color: "transparent", backgroundColor: "#f8d8b8", backgroundSize: "cover", backgroundPosition: "54.5% 45.7%", backgroundRepeat: "no-repeat" } as React.CSSProperties} />
      </span>
     </a>
    </li>
    <li className="tp-lineup__seat" style={{ "--x": "65%", "--w": "9.4rem", "--peek": "0.74", "--tilt": "3deg", "--i": "3" } as React.CSSProperties}>
-    <a aria-label="Meet Maltipoo &amp; Cavapoo, Maltipoo &amp; Cavapoo" className="tp-lineup__pup" data-pup-friend="true" href="/puppies/maltipoo-cavapoo-male">
+    <a aria-label="Meet Maltipoo &amp; Cavapoo, Maltipoo &amp; Cavapoo" className="tp-lineup__pup" data-pup-friend="true" data-state={pupStates[3]} onPointerEnter={() => setHoveredTag(3)} onPointerLeave={() => setHoveredTag(null)} onFocus={() => setHoveredTag(3)} onBlur={() => setHoveredTag(null)} href="/puppies/maltipoo-cavapoo-male">
      <span className="tp-lineup__photo">
       <img alt="Male Maltipoo &amp; Cavapoo puppy" loading="eager" sizes="11rem" src="/media/YQhey4j7uWvZ/3ea10db6c1/b942a5_7ce7e7bd18424b6c8fb16dd30113ade2-mv2.jpg" style={{ position: "absolute", height: "100%", width: "100%", left: "0", top: "0", right: "0", bottom: "0", objectFit: "cover", objectPosition: "44.7% 29.5%", color: "transparent", backgroundColor: "#b8a8a8", backgroundSize: "cover", backgroundPosition: "44.7% 29.5%", backgroundRepeat: "no-repeat" } as React.CSSProperties} />
      </span>
     </a>
    </li>
    <li className="tp-lineup__seat" style={{ "--x": "77.5%", "--w": "10.6rem", "--peek": "0.82", "--tilt": "-3deg", "--i": "4" } as React.CSSProperties}>
-    <a aria-label="Meet Toy Poodle, Toy Poodle" className="tp-lineup__pup" data-pup-friend="true" href="/puppies/toy-poodle-male-female">
+    <a aria-label="Meet Toy Poodle, Toy Poodle" className="tp-lineup__pup" data-pup-friend="true" data-state={pupStates[4]} onPointerEnter={() => setHoveredTag(4)} onPointerLeave={() => setHoveredTag(null)} onFocus={() => setHoveredTag(4)} onBlur={() => setHoveredTag(null)} href="/puppies/toy-poodle-male-female">
      <span className="tp-lineup__photo">
       <img alt="Toy Poodle puppy" loading="eager" sizes="11rem" src="/media/vMu0BPvkAZ-j/c65e53967d/b942a5_0b2c0c0d178c4005acbe28725a5ea573-mv2.jpg" style={{ position: "absolute", height: "100%", width: "100%", left: "0", top: "0", right: "0", bottom: "0", objectFit: "cover", objectPosition: "65.4% 44.7%", color: "transparent", backgroundColor: "#c8c8c8", backgroundSize: "cover", backgroundPosition: "65.4% 44.7%", backgroundRepeat: "no-repeat" } as React.CSSProperties} />
      </span>
     </a>
    </li>
    <li className="tp-lineup__seat" style={{ "--x": "91%", "--w": "8.4rem", "--peek": "0.6", "--tilt": "4deg", "--i": "5" } as React.CSSProperties}>
-    <a aria-label="Meet Maltipoo, Maltipoo" className="tp-lineup__pup" data-pup-friend="true" href="/puppies/maltipoo-female-2">
+    <a aria-label="Meet Maltipoo, Maltipoo" className="tp-lineup__pup" data-pup-friend="true" data-state={pupStates[5]} onPointerEnter={() => setHoveredTag(5)} onPointerLeave={() => setHoveredTag(null)} onFocus={() => setHoveredTag(5)} onBlur={() => setHoveredTag(null)} href="/puppies/maltipoo-female-2">
      <span className="tp-lineup__photo">
       <img alt="Female Maltipoo puppy" loading="eager" sizes="11rem" src="/media/3WJNmn6VVgVu/732f779474/b942a5_2b5dcece361b4589890ae920c66a1b70-mv2.jpg" style={{ position: "absolute", height: "100%", width: "100%", left: "0", top: "0", right: "0", bottom: "0", objectFit: "cover", objectPosition: "64.6% 42.3%", color: "transparent", backgroundColor: "#080808", backgroundSize: "cover", backgroundPosition: "64.6% 42.3%", backgroundRepeat: "no-repeat" } as React.CSSProperties} />
      </span>
@@ -83,42 +120,42 @@ export const HeroSection: React.FC = () => {
   </ul>
   <ul aria-hidden="true" className="tp-lineup tp-lineup--tags">
    <li className="tp-lineup__seat" style={{ "--x": "9%", "--w": "8.6rem", "--peek": "0.62", "--tilt": "-5deg", "--i": "0" } as React.CSSProperties}>
-    <span className="tp-lineup__ghost">
+    <span className="tp-lineup__ghost" data-tag={activeTag === 0 || hoveredTag === 0 ? "show" : undefined}>
      <span className="tp-lineup__name font-scrawl">
       Max
      </span>
     </span>
    </li>
    <li className="tp-lineup__seat" style={{ "--x": "22.5%", "--w": "10.4rem", "--peek": "0.8", "--tilt": "3deg", "--i": "1" } as React.CSSProperties}>
-    <span className="tp-lineup__ghost">
+    <span className="tp-lineup__ghost" data-tag={activeTag === 1 || hoveredTag === 1 ? "show" : undefined}>
      <span className="tp-lineup__name font-scrawl">
       Korean Teacup Maltipoo
      </span>
     </span>
    </li>
    <li className="tp-lineup__seat" style={{ "--x": "35%", "--w": "9.2rem", "--peek": "0.7", "--tilt": "-2deg", "--i": "2" } as React.CSSProperties}>
-    <span className="tp-lineup__ghost">
+    <span className="tp-lineup__ghost" data-tag={activeTag === 2 || hoveredTag === 2 ? "show" : undefined}>
      <span className="tp-lineup__name font-scrawl">
       Korean Teacup Poodle
      </span>
     </span>
    </li>
    <li className="tp-lineup__seat" style={{ "--x": "65%", "--w": "9.4rem", "--peek": "0.74", "--tilt": "3deg", "--i": "3" } as React.CSSProperties}>
-    <span className="tp-lineup__ghost">
+    <span className="tp-lineup__ghost" data-tag={activeTag === 3 || hoveredTag === 3 ? "show" : undefined}>
      <span className="tp-lineup__name font-scrawl">
       Maltipoo &amp; Cavapoo
      </span>
     </span>
    </li>
    <li className="tp-lineup__seat" style={{ "--x": "77.5%", "--w": "10.6rem", "--peek": "0.82", "--tilt": "-3deg", "--i": "4" } as React.CSSProperties}>
-    <span className="tp-lineup__ghost">
+    <span className="tp-lineup__ghost" data-tag={activeTag === 4 || hoveredTag === 4 ? "show" : undefined}>
      <span className="tp-lineup__name font-scrawl">
       Toy Poodle
      </span>
     </span>
    </li>
    <li className="tp-lineup__seat" style={{ "--x": "91%", "--w": "8.4rem", "--peek": "0.6", "--tilt": "4deg", "--i": "5" } as React.CSSProperties}>
-    <span className="tp-lineup__ghost">
+    <span className="tp-lineup__ghost" data-tag={activeTag === 5 || hoveredTag === 5 ? "show" : undefined}>
      <span className="tp-lineup__name font-scrawl">
       Maltipoo
      </span>
