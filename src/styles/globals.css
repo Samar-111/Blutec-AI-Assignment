@@ -1,0 +1,34 @@
+@import "./fonts.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --header-h: 5.5rem;
+  --bar-h: 4.5rem;
+  --color-milk: #fffdf8;
+  --color-cocoa: #2a170e;
+  --color-honey: #fbe3b4;
+  --color-toffee: #ffd27f;
+  --color-toffee-ink: #c2622b;
+  --color-cocoa-soft: #5a3f31;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: var(--font-sans);
+  background-color: var(--color-milk, #fffdf8);
+  color: var(--color-cocoa, #2a170e);
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+main {
+  flex: 1;
+}

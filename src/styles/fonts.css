@@ -1,0 +1,34 @@
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/fraunces.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url('/fonts/figtree.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Shantell Sans';
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url('/fonts/shantell-sans.woff2') format('woff2');
+}
+
+:root {
+  --font-fraunces: 'Fraunces', serif;
+  --font-figtree: 'Figtree', sans-serif;
+  --font-shantell: 'Shantell Sans', cursive;
+  
+  --font-sans: 'Figtree', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: 'Fraunces', serif;
+  --font-hand: 'Shantell Sans', cursive;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
