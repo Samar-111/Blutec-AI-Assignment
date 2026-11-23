@@ -32,3 +32,12 @@ body {
 main {
   flex: 1;
 }
+
+@media (hover: hover) and (pointer: fine) {
+  html, body {
+    cursor: url(/cursor/paw.svg) 9 6, auto;
+  }
+  a, button, summary, label[for], [role="button"], [role="tab"], select, input[type="submit"] {
+    cursor: url(/cursor/paw-press.svg) 9 6, pointer;
+  }
+}

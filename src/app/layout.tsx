@@ -4,6 +4,9 @@ import '../styles/globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { MobileBottomBar } from '@/components/MobileBottomBar';
+import { PawTrailCanvas } from '@/components/PawTrailCanvas';
+import { RouteCurtain } from '@/components/RouteCurtain';
+import { SmoothScroll } from '@/components/SmoothScroll';
 
 export const metadata: Metadata = {
   title: 'TeddyPups U.A.E. — Premium teacup puppies in Dubai',
@@ -24,6 +27,9 @@ export default function RootLayout({
         <link rel="stylesheet" href="/css/original.css" />
       </head>
       <body className="min-h-screen flex flex-col bg-[#fffdf8] text-[#2a170e] antialiased selection:bg-[#fbe3b4] selection:text-[#2a170e]">
+        {/* Intro Curtain Splash Blanket */}
+        <RouteCurtain />
+
         {/* Skip to Content Accessibility link */}
         <a
           href="#main"
@@ -32,19 +38,25 @@ export default function RootLayout({
           Skip to content
         </a>
 
-        {/* Global Navigation Header */}
-        <Header />
+        {/* Smooth Scrolling Provider */}
+        <SmoothScroll>
+          {/* Global Navigation Header */}
+          <Header />
 
-        {/* Main Content Area */}
-        <main id="main" className="flex-1 pt-[var(--header-h)] outline-none">
-          {children}
-        </main>
+          {/* Main Content Area */}
+          <main id="main" className="flex-1 pt-[var(--header-h)] outline-none">
+            {children}
+          </main>
 
-        {/* Global Footer */}
-        <Footer />
+          {/* Global Footer */}
+          <Footer />
 
-        {/* Mobile Quick Action Sticky Bar */}
-        <MobileBottomBar />
+          {/* Mobile Quick Action Sticky Bar */}
+          <MobileBottomBar />
+        </SmoothScroll>
+
+        {/* Mouse Pointer Paw Prints Canvas Trail */}
+        <PawTrailCanvas />
       </body>
     </html>
   );
