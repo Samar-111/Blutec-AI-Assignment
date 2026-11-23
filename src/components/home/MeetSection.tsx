@@ -1,13 +1,147 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
 export const MeetSection: React.FC = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const pinRangeRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const hallRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLOListElement>(null);
+  const teddyRef = useRef<HTMLDivElement>(null);
+
+  const [isPinned, setIsPinned] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const updateDimensions = () => {
+      const desktop = window.innerWidth >= 1024;
+      setIsPinned(desktop);
+
+      const stageEl = stageRef.current;
+      const hallEl = hallRef.current;
+      const trackEl = trackRef.current;
+      const pinRangeEl = pinRangeRef.current;
+
+      if (!trackEl || !pinRangeEl) return;
+
+      if (desktop && hallEl && stageEl) {
+        const headEl = stageEl.querySelector('.tp-meet__head') as HTMLElement | null;
+        const headH = headEl ? headEl.offsetTop + headEl.offsetHeight : 80;
+        const floorH = hallEl.querySelector('.tp-meet__floor')?.clientHeight || 100;
+        const plateH = 70;
+        const doorW = Math.max(
+          128,
+          Math.min(256, 0.15 * window.innerWidth, (stageEl.clientHeight - headH - floorH - plateH - 40) / 1.3)
+        );
+        hallEl.style.setProperty('--door-w', `${doorW.toFixed(0)}px`);
+
+        const totalScrollDist = Math.max(0, trackEl.scrollWidth - window.innerWidth + 0.35 * window.innerWidth);
+        pinRangeEl.style.height = `calc(100vh + ${Math.round(totalScrollDist)}px)`;
+      } else {
+        hallEl?.style.removeProperty('--door-w');
+        pinRangeEl.style.height = 'auto';
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+
+    // Track scroll and synchronize puppy treadmill + sequential door opening
+    let ticking = false;
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+
+      requestAnimationFrame(() => {
+        ticking = false;
+        const desktop = window.innerWidth >= 1024;
+        const trackEl = trackRef.current;
+        const hallEl = hallRef.current;
+        const pinRangeEl = pinRangeRef.current;
+        const teddyEl = teddyRef.current;
+
+        if (!trackEl) return;
+
+        if (desktop && pinRangeEl && hallEl) {
+          const pinTop = pinRangeEl.getBoundingClientRect().top + window.scrollY;
+          const pinHeight = pinRangeEl.offsetHeight - window.innerHeight;
+          const scrollY = window.scrollY;
+
+          const progress = pinHeight > 0 ? Math.max(0, Math.min(1, (scrollY - pinTop) / pinHeight)) : 0;
+          const totalDist = Math.max(0, trackEl.scrollWidth - window.innerWidth + 0.35 * window.innerWidth);
+          const trackX = -progress * totalDist;
+
+          trackEl.style.transform = `translate3d(${trackX.toFixed(1)}px, 0, 0)`;
+          hallEl.style.setProperty('--floor-x', `${trackX.toFixed(1)}px`);
+
+          // Walking pose while moving through the section
+          const isWalking = progress > 0.008 && progress < 0.992;
+          if (teddyEl) {
+            teddyEl.setAttribute('data-pose', isWalking ? 'walk' : 'sit');
+          }
+
+          // Puppy station trigger position (approx 36% of viewport or 14vw + padding)
+          const puppyStationX = Math.max(220, Math.min(window.innerWidth * 0.36, 480));
+
+          const doors = trackEl.children;
+          for (let i = 0; i < doors.length; i++) {
+            const door = doors[i] as HTMLElement;
+            if (door.classList.contains('tp-door--all')) {
+              door.setAttribute('data-open', progress > 0.94 ? 'true' : 'false');
+              continue;
+            }
+
+            const doorLeft = door.offsetLeft + trackX;
+            // Door opens when it reaches/passes the puppy!
+            const passedPuppy = doorLeft <= puppyStationX;
+            const currentOpen = door.getAttribute('data-open') === 'true';
+
+            if (currentOpen !== passedPuppy) {
+              door.setAttribute('data-open', passedPuppy ? 'true' : 'false');
+            }
+          }
+        }
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    // IntersectionObserver for mobile / smaller screens when not pinned
+    let observer: IntersectionObserver | null = null;
+    if (window.innerWidth < 1024 && trackRef.current) {
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.setAttribute('data-open', 'true');
+            }
+          });
+        },
+        { threshold: 0.3 }
+      );
+
+      const doors = trackRef.current.children;
+      for (let i = 0; i < doors.length; i++) {
+        observer.observe(doors[i]);
+      }
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+      window.removeEventListener('scroll', handleScroll);
+      observer?.disconnect();
+    };
+  }, []);
+
   return (
-<section aria-labelledby="meet-title" className="tp-scene tp-meet" data-pup-scene="true" data-tone="light" style={{ "--sky-top": "#fff1d8", "--sky-bottom": "#fbe3b4" } as React.CSSProperties}>
- <div data-pin-range="true" style={{ "--pinned": "0" } as React.CSSProperties}>
-  <div className="tp-meet__stage">
+
+<section ref={sectionRef} aria-labelledby="meet-title" className="tp-scene tp-meet" data-pup-scene="true" data-tone="light" data-pinned={isPinned ? "true" : undefined} style={{ "--sky-top": "#fff1d8", "--sky-bottom": "#fbe3b4" } as React.CSSProperties}>
+ <div ref={pinRangeRef} data-pin-range="true" style={{ "--pinned": isPinned ? "1" : "0" } as React.CSSProperties}>
+  <div ref={stageRef} className="tp-meet__stage">
    <header className="tp-meet__head gutter">
     <div>
      <h2 className="font-plush text-huge" id="meet-title">
@@ -21,9 +155,9 @@ export const MeetSection: React.FC = () => {
      See all available puppies
     </a>
    </header>
-   <div className="tp-meet__hall">
-    <ol aria-label="Puppies looking for a family" className="tp-meet__track" data-treadmill="true">
-     <li className="tp-door" data-open="true">
+   <div ref={hallRef} className="tp-meet__hall">
+    <ol ref={trackRef} aria-label="Puppies looking for a family" className="tp-meet__track" data-treadmill="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/maltipoo-max-male" style={{ "--door": "#a24a1a" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -59,7 +193,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door" data-open="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/korean-teacup-maltipoo-female" style={{ "--door": "#5a3a28" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -93,7 +227,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door" data-open="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/korean-teacup-poodle-female" style={{ "--door": "#d4893f" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -125,7 +259,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door" data-open="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/maltipoo-cavapoo-male" style={{ "--door": "#b8644a" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -159,7 +293,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door" data-open="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/toy-poodle-male-female" style={{ "--door": "#7a4a2e" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -191,7 +325,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door" data-open="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/maltipoo-female-2" style={{ "--door": "#a24a1a" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -225,7 +359,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door" data-open="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/pomeranian-female" style={{ "--door": "#5a3a28" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -257,7 +391,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door" data-open="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/copper-male" style={{ "--door": "#d4893f" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -291,7 +425,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door" data-open="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/shitzu-female" style={{ "--door": "#b8644a" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -323,7 +457,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door" data-open="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/shitzu-male" style={{ "--door": "#7a4a2e" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -355,7 +489,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door" data-open="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/maltipoo-female-1" style={{ "--door": "#a24a1a" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -387,7 +521,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door" data-open="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/maltipoo-female" style={{ "--door": "#5a3a28" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -419,7 +553,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door" data-open="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/korean-teacup-pomeranian-1" style={{ "--door": "#d4893f" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -451,7 +585,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door" data-open="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/korean-teacup-pomeranian" style={{ "--door": "#b8644a" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -483,7 +617,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door" data-open="true">
+     <li className="tp-door" data-open="false">
       <a className="tp-door__link" href="/puppies/korean-teacup-pomeranian-male" style={{ "--door": "#7a4a2e" } as React.CSSProperties}>
        <span className="tp-door__plate">
         <span className="font-plush tp-door__name">
@@ -515,7 +649,7 @@ export const MeetSection: React.FC = () => {
        </span>
       </a>
      </li>
-     <li className="tp-door tp-door--all" data-open="true">
+     <li className="tp-door tp-door--all" data-open="false">
       <a className="tp-door__link" href="/puppies">
        <span className="tp-door__frame tp-door__frame--all">
         <span className="font-plush tp-door__all">
@@ -527,7 +661,7 @@ export const MeetSection: React.FC = () => {
     </ol>
     <div aria-hidden="true" className="tp-meet__floor">
     </div>
-    <div className="pup-stop tp-meet__teddy" data-facing="right" data-pose="sit" data-pup-stop="true">
+    <div ref={teddyRef} className="pup-stop tp-meet__teddy" data-facing="right" data-pose="sit" data-pup-stop="true">
      <div className="pup-buddy" data-facing="right">
       <svg aria-hidden="true" focusable="false" style={{ overflow: "visible" } as React.CSSProperties} viewBox="0 0 300 240">
        <g data-p="root">

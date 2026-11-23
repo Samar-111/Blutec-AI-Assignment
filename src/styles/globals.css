@@ -110,3 +110,74 @@ main {
 @keyframes tp-curtain-rest {
   to { visibility: hidden; }
 }
+
+
+/* Puppy Doors Opening & 3D Shutter leaf animation */
+.tp-door:not([data-open="true"]) .tp-door__leaf {
+  transform: rotateY(0deg) !important;
+  transition: transform 1.05s cubic-bezier(0.3, 1.32, 0.48, 1) 50ms !important;
+}
+
+.tp-door[data-open="true"] .tp-door__leaf {
+  transform: rotateY(var(--door-open, 78deg)) !important;
+  transition: transform 1.05s cubic-bezier(0.3, 1.32, 0.48, 1) 50ms !important;
+}
+
+.tp-door[data-open="true"] .tp-door__room img {
+  scale: 1.04 !important;
+  transition: scale 0.45s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+@media (min-width: 1024px) {
+  .tp-meet[data-pinned="true"] .tp-meet__stage {
+    position: sticky !important;
+    top: 0 !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding-top: calc(var(--header-h) + clamp(1rem, 3vh, 2.5rem)) !important;
+    padding-bottom: 0 !important;
+  }
+  .tp-meet[data-pinned="true"] .tp-meet__hall {
+    flex: 1 !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  .tp-meet[data-pinned="true"] .tp-meet__track {
+    position: absolute !important;
+    left: 0 !important;
+    bottom: var(--floor-h, clamp(5rem, 13vh, 8rem)) !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    width: max-content !important;
+    max-width: none !important;
+    gap: clamp(4.5rem, 6vw, 7rem) !important;
+    padding-inline: 38vw 12vw !important;
+    will-change: transform !important;
+    align-items: flex-end !important;
+  }
+  .tp-meet[data-pinned="true"] .tp-meet__floor {
+    display: block !important;
+    position: absolute !important;
+    inset: auto 0 0 !important;
+    height: var(--floor-h, clamp(5rem, 13vh, 8rem)) !important;
+    border-top: 3px solid var(--color-cocoa) !important;
+    background: linear-gradient(to bottom, rgba(42, 23, 14, 0.16), transparent 22%),
+                repeating-linear-gradient(90deg, transparent 0 calc(11rem - 2px), rgba(42, 23, 14, 0.12) calc(11rem - 2px) 11rem) var(--floor-x, 0) 0 / auto,
+                linear-gradient(#e8b06a, #dc9a52) !important;
+    box-shadow: 0 -12px 0 -6px #f5d9a8 !important;
+  }
+  .tp-meet[data-pinned="true"] .tp-meet__teddy {
+    position: absolute !important;
+    left: 14vw !important;
+    bottom: calc(var(--floor-h, clamp(5rem, 13vh, 8rem)) * 0.42) !important;
+    top: auto !important;
+    right: auto !important;
+    width: clamp(11rem, min(14vw, 24vh), 14rem) !important;
+    z-index: 10 !important;
+  }
+  .tp-meet[data-pinned="true"] .tp-door {
+    width: var(--door-w, clamp(8rem, min(15vw, 24vh), 16rem)) !important;
+  }
+}
