@@ -54,8 +54,9 @@ export const Header: React.FC = () => {
             />
           </div>
           <span
-            className="tp-header__name font-bold tracking-tight inline-block leading-none"
+            className="tp-header__name font-bold tracking-tight leading-none"
             style={{
+              display: "inline-block",
               fontFamily: "var(--font-fraunces, 'Fraunces', serif)",
               color: "#2a170e",
               fontVariationSettings: "normal",
