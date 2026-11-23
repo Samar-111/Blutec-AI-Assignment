@@ -29,7 +29,6 @@ export const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
@@ -37,7 +36,6 @@ export const Header: React.FC = () => {
   return (
     <header className={`tp-header fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-milk/95 shadow-md backdrop-blur-md' : 'bg-milk/80 backdrop-blur-sm'}`}>
       <div className="gutter mx-auto flex h-[var(--header-h)] max-w-[110rem] items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand Logo & Name */}
         <Link
           href="/"
           className="tp-header__brand relative z-10 flex items-center gap-3 rounded-full flex-none"
@@ -64,7 +62,6 @@ export const Header: React.FC = () => {
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
         <nav aria-label="Main" className="hidden lg:flex tp-header__nav">
           <ul className="flex items-center gap-1 xl:gap-2">
             {NAV_ITEMS.map((item) => {
@@ -88,7 +85,6 @@ export const Header: React.FC = () => {
           </ul>
         </nav>
 
-        {/* Right Action Buttons */}
         <div className="flex items-center gap-2 sm:gap-3">
           <a
             href="https://wa.me/919898124987?text=Hi%20Insta%20Biz%20Web%2C%20I'd%20like%20to%20discuss%20a%20project."
@@ -100,7 +96,6 @@ export const Header: React.FC = () => {
             <span>WhatsApp us</span>
           </a>
 
-          {/* Mobile Menu Button */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -114,7 +109,6 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Menu Drawer Overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-x-0 top-[var(--header-h)] z-50 border-b border-cocoa/10 bg-milk/98 px-6 pb-8 pt-4 shadow-2xl backdrop-blur-xl lg:hidden animate-in slide-in-from-top-4 duration-200">
           <p className="font-scrawl text-sm text-toffee-ink mb-3">where to, friend?</p>
