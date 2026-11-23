@@ -12,9 +12,44 @@ export const MeetSection: React.FC = () => {
   const teddyRef = useRef<HTMLDivElement>(null);
 
   const [isPinned, setIsPinned] = useState<boolean>(false);
+  const [animationFinished, setAnimationFinished] = useState<boolean>(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    let isLocked = true;
+    let animId = 0;
+
+    // Prevent scrolling function while locked
+    const preventScroll = (e: Event) => {
+      if (isLocked) {
+        e.preventDefault();
+      }
+    };
+
+    const preventKeys = (e: KeyboardEvent) => {
+      if (isLocked && ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Space', 'Home', 'End'].includes(e.code)) {
+        e.preventDefault();
+      }
+    };
+
+    // Lock scrolling initially
+    window.addEventListener('wheel', preventScroll, { passive: false });
+    window.addEventListener('touchmove', preventScroll, { passive: false });
+    window.addEventListener('keydown', preventKeys, { passive: false });
+    window.dispatchEvent(new CustomEvent('tp:lock-scroll', { detail: { locked: true } }));
+    document.documentElement.dataset.scrollLocked = 'true';
+
+    const unlockScrolling = () => {
+      if (!isLocked) return;
+      isLocked = false;
+      setAnimationFinished(true);
+      window.removeEventListener('wheel', preventScroll);
+      window.removeEventListener('touchmove', preventScroll);
+      window.removeEventListener('keydown', preventKeys);
+      window.dispatchEvent(new CustomEvent('tp:lock-scroll', { detail: { locked: false } }));
+      delete document.documentElement.dataset.scrollLocked;
+    };
 
     const updateDimensions = () => {
       const desktop = window.innerWidth >= 1024;
@@ -49,91 +84,119 @@ export const MeetSection: React.FC = () => {
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
 
-    // Track scroll and synchronize puppy treadmill + sequential door opening
-    let ticking = false;
-    const handleScroll = () => {
-      if (ticking) return;
-      ticking = true;
+    // Initial autonomous animation: puppy moves across and opens each door one by one
+    const startOpeningSequence = () => {
+      const trackEl = trackRef.current;
+      const hallEl = hallRef.current;
+      const teddyEl = teddyRef.current;
+      if (!trackEl || !hallEl) return;
 
-      requestAnimationFrame(() => {
-        ticking = false;
-        const desktop = window.innerWidth >= 1024;
-        const trackEl = trackRef.current;
-        const hallEl = hallRef.current;
-        const pinRangeEl = pinRangeRef.current;
-        const teddyEl = teddyRef.current;
+      const doors = Array.from(trackEl.children) as HTMLElement[];
+      const totalDoors = doors.length;
+      if (!totalDoors) return;
 
-        if (!trackEl) return;
+      // Start puppy walking
+      teddyEl?.setAttribute('data-pose', 'walk');
 
-        if (desktop && pinRangeEl && hallEl) {
-          const pinTop = pinRangeEl.getBoundingClientRect().top + window.scrollY;
-          const pinHeight = pinRangeEl.offsetHeight - window.innerHeight;
-          const scrollY = window.scrollY;
+      const desktop = window.innerWidth >= 1024;
+      const totalDist = desktop ? Math.max(0, trackEl.scrollWidth - window.innerWidth + 0.35 * window.innerWidth) : 0;
+      const puppyStationX = Math.max(220, Math.min(window.innerWidth * 0.36, 480));
 
-          const progress = pinHeight > 0 ? Math.max(0, Math.min(1, (scrollY - pinTop) / pinHeight)) : 0;
-          const totalDist = Math.max(0, trackEl.scrollWidth - window.innerWidth + 0.35 * window.innerWidth);
-          const trackX = -progress * totalDist;
+      let startTime: number | null = null;
+      // Duration to glide through doors gracefully (~4.8 seconds)
+      const duration = 4800;
 
+      const step = (time: number) => {
+        if (!startTime) startTime = time;
+        const elapsed = time - startTime;
+        const p = Math.min(1, elapsed / duration);
+        // Easing: smooth easeInOutQuad
+        const ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+
+        if (desktop) {
+          const trackX = -ease * totalDist;
           trackEl.style.transform = `translate3d(${trackX.toFixed(1)}px, 0, 0)`;
           hallEl.style.setProperty('--floor-x', `${trackX.toFixed(1)}px`);
 
-          // Walking pose while moving through the section
-          const isWalking = progress > 0.008 && progress < 0.992;
-          if (teddyEl) {
-            teddyEl.setAttribute('data-pose', isWalking ? 'walk' : 'sit');
-          }
-
-          // Puppy station trigger position (approx 36% of viewport or 14vw + padding)
-          const puppyStationX = Math.max(220, Math.min(window.innerWidth * 0.36, 480));
-
-          const doors = trackEl.children;
+          // Check each door against puppy station
           for (let i = 0; i < doors.length; i++) {
-            const door = doors[i] as HTMLElement;
+            const door = doors[i];
             if (door.classList.contains('tp-door--all')) {
-              door.setAttribute('data-open', progress > 0.94 ? 'true' : 'false');
+              if (p > 0.95) {
+                door.setAttribute('data-open', 'true');
+              }
               continue;
             }
 
             const doorLeft = door.offsetLeft + trackX;
-            // Door opens when it reaches/passes the puppy!
-            const passedPuppy = doorLeft <= puppyStationX;
-            const currentOpen = door.getAttribute('data-open') === 'true';
-
-            if (currentOpen !== passedPuppy) {
-              door.setAttribute('data-open', passedPuppy ? 'true' : 'false');
+            if (doorLeft <= puppyStationX) {
+              door.setAttribute('data-open', 'true');
             }
           }
+        } else {
+          // Mobile/tablet: open doors sequentially
+          const doorIndex = Math.floor(p * totalDoors);
+          for (let i = 0; i <= doorIndex && i < totalDoors; i++) {
+            doors[i].setAttribute('data-open', 'true');
+          }
         }
-      });
+
+        if (p < 1) {
+          animId = requestAnimationFrame(step);
+        } else {
+          // Animation reached the end!
+          teddyEl?.setAttribute('data-pose', 'sit');
+          // Open the final door
+          doors[totalDoors - 1]?.setAttribute('data-open', 'true');
+
+          // Wait for the final door's 1.05s opening transition to completely finish
+          setTimeout(() => {
+            unlockScrolling();
+          }, 1100);
+        }
+      };
+
+      // Slight initial breather after curtain (500ms) before puppy starts walking
+      setTimeout(() => {
+        animId = requestAnimationFrame(step);
+      }, 500);
+    };
+
+    startOpeningSequence();
+
+    // After animation unlocks, standard interactive scroll updates track
+    const handleScroll = () => {
+      if (isLocked) return;
+      const desktop = window.innerWidth >= 1024;
+      const trackEl = trackRef.current;
+      const hallEl = hallRef.current;
+      const pinRangeEl = pinRangeRef.current;
+
+      if (!trackEl || !desktop || !pinRangeEl || !hallEl) return;
+
+      const pinTop = pinRangeEl.getBoundingClientRect().top + window.scrollY;
+      const pinHeight = pinRangeEl.offsetHeight - window.innerHeight;
+      const scrollY = window.scrollY;
+
+      if (pinHeight <= 0) return;
+      const progress = Math.max(0, Math.min(1, (scrollY - pinTop) / pinHeight));
+      const totalDist = Math.max(0, trackEl.scrollWidth - window.innerWidth + 0.35 * window.innerWidth);
+      const trackX = -progress * totalDist;
+
+      trackEl.style.transform = `translate3d(${trackX.toFixed(1)}px, 0, 0)`;
+      hallEl.style.setProperty('--floor-x', `${trackX.toFixed(1)}px`);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-
-    // IntersectionObserver for mobile / smaller screens when not pinned
-    let observer: IntersectionObserver | null = null;
-    if (window.innerWidth < 1024 && trackRef.current) {
-      observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.setAttribute('data-open', 'true');
-            }
-          });
-        },
-        { threshold: 0.3 }
-      );
-
-      const doors = trackRef.current.children;
-      for (let i = 0; i < doors.length; i++) {
-        observer.observe(doors[i]);
-      }
-    }
 
     return () => {
+      cancelAnimationFrame(animId);
       window.removeEventListener('resize', updateDimensions);
       window.removeEventListener('scroll', handleScroll);
-      observer?.disconnect();
+      window.removeEventListener('wheel', preventScroll);
+      window.removeEventListener('touchmove', preventScroll);
+      window.removeEventListener('keydown', preventKeys);
+      delete document.documentElement.dataset.scrollLocked;
     };
   }, []);
 

@@ -24,6 +24,17 @@ export const SmoothScroll: React.FC<{ children: React.ReactNode }> = ({ children
 
     rafId = requestAnimationFrame(raf);
 
+    // Scroll lock event listener
+    const handleLock = (e: Event) => {
+      const custom = e as CustomEvent<{ locked: boolean }>;
+      if (custom.detail?.locked) {
+        lenis.stop();
+      } else {
+        lenis.start();
+      }
+    };
+    window.addEventListener('tp:lock-scroll', handleLock);
+
     // Scroll reveal observer
     const reveals = document.querySelectorAll('[data-reveal]');
     const observer = new IntersectionObserver(
@@ -41,6 +52,7 @@ export const SmoothScroll: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       cancelAnimationFrame(rafId);
+      window.removeEventListener('tp:lock-scroll', handleLock);
       observer.disconnect();
       lenis.destroy();
     };

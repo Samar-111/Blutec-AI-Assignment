@@ -37,25 +37,25 @@ export const Header: React.FC = () => {
   return (
     <header className={`tp-header fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-milk/95 shadow-md backdrop-blur-md' : 'bg-milk/80 backdrop-blur-sm'}`}>
       <div className="gutter mx-auto flex h-[var(--header-h)] max-w-[110rem] items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand Logo */}
-        <Link href="/" className="tp-header__brand group flex items-center gap-3">
-          <div className="relative size-11 overflow-hidden rounded-full border-2 border-cocoa bg-honey/40 p-1 transition-transform group-hover:scale-105">
+        {/* Brand Logo & Name */}
+        <Link
+          href="/"
+          className="tp-header__brand group flex items-center gap-3 rounded-full flex-none"
+          aria-label="TeddyPups U.A.E. — home"
+        >
+          <div className="relative size-10 md:size-11 flex-shrink-0">
             <Image
               src="/brand/logo.png"
-              alt="TeddyPups U.A.E. logo"
-              fill
-              className="object-contain p-0.5"
+              alt="TeddyPups logo"
+              width={48}
+              height={48}
+              className="tp-header__logo object-contain transition-transform group-hover:-rotate-8"
               priority
             />
           </div>
-          <div className="flex flex-col">
-            <span className="font-plush text-xl font-bold tracking-tight text-cocoa md:text-2xl">
-              TeddyPups
-            </span>
-            <span className="font-scrawl text-xs tracking-wider text-toffee-ink">
-              U.A.E. · Dubai
-            </span>
-          </div>
+          <span className="font-plush tp-header__name text-[1.35rem] md:text-[1.5rem] font-bold tracking-tight text-[#2a170e] inline leading-none">
+            TeddyPups
+          </span>
         </Link>
 
         {/* Desktop Navigation */}
