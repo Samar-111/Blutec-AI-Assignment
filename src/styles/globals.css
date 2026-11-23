@@ -117,7 +117,13 @@ main {
 .tp-header__brand .tp-header__name,
 .tp-header__name {
   display: inline-block !important;
-  color: var(--color-cocoa, #2a170e) !important;
+  color: #2a170e !important;
+  font-family: var(--font-fraunces, 'Fraunces', serif) !important;
+  font-weight: 700 !important;
+  font-variation-settings: normal !important;
+  line-height: 1 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .tp-door:not([data-open="true"]) .tp-door__leaf {
