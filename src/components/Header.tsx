@@ -40,7 +40,7 @@ export const Header: React.FC = () => {
         {/* Brand Logo & Name */}
         <Link
           href="/"
-          className="tp-header__brand flex items-center gap-3 rounded-full flex-none"
+          className="tp-header__brand relative z-10 flex items-center gap-3 rounded-full flex-none"
           aria-label="TeddyPups U.A.E. — home"
         >
           <div className="relative size-10 md:size-11 flex-shrink-0">
@@ -54,12 +54,10 @@ export const Header: React.FC = () => {
             />
           </div>
           <span
-            className="tp-header__name font-bold tracking-tight leading-none"
+            className="font-plush tp-header__name relative z-10 font-bold tracking-tight inline-block leading-none"
             style={{
-              display: "inline-block",
               fontFamily: "var(--font-fraunces, 'Fraunces', serif)",
               color: "#2a170e",
-              fontVariationSettings: "normal",
             }}
           >
             TeddyPups
