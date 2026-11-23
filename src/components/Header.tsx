@@ -10,7 +10,6 @@ import { Menu, X } from 'lucide-react';
 const NAV_ITEMS = [
   { label: 'Home', href: '/' },
   { label: 'Puppies', href: '/puppies' },
-  { label: 'Gone home', href: '/gone-home' },
   { label: 'Happy families', href: '/happy-families' },
   { label: 'How it works', href: '/how-it-works' },
   { label: 'FAQ', href: '/faq' },

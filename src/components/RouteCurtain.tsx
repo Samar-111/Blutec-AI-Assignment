@@ -1,20 +1,139 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 
 export const RouteCurtain: React.FC = () => {
-  const [curtainState, setCurtainState] = useState<'intro' | 'open'>('intro');
+  const router = useRouter();
+  const pathname = usePathname();
+  const [curtainState, setCurtainState] = useState<'intro' | 'covering' | 'covered' | 'lifting' | 'idle'>('intro');
+  const targetUrlRef = useRef<string | null>(null);
+  const currentPathRef = useRef<string>(pathname);
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
+  const clearAllTimeouts = () => {
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
+  };
+
+  const addTimeout = (fn: () => void, delay: number) => {
+    const id = setTimeout(fn, delay);
+    timeoutsRef.current.push(id);
+    return id;
+  };
+
+  // Initial intro animation on first page load
   useEffect(() => {
     const timer = setTimeout(() => {
-      setCurtainState('open');
-    }, 1100);
+      setCurtainState('idle');
+      if (typeof document !== 'undefined') {
+        delete document.documentElement.dataset.curtain;
+      }
+    }, 1080);
     return () => clearTimeout(timer);
   }, []);
 
+  // Listen for route changes
+  useEffect(() => {
+    if (pathname === currentPathRef.current) return;
+    currentPathRef.current = pathname;
+
+    // Trigger lifting to reveal new page
+    clearAllTimeouts();
+    setCurtainState('lifting');
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('tp:arrived'));
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    addTimeout(() => {
+      setCurtainState('idle');
+      if (typeof document !== 'undefined') {
+        delete document.documentElement.dataset.curtain;
+      }
+    }, 460);
+
+    return () => clearAllTimeouts();
+  }, [pathname]);
+
+  // Intercept internal link clicks to trigger top-down curtain
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+        return;
+      }
+
+      const target = e.target as HTMLElement | null;
+      const link = target?.closest('a[href]') as HTMLAnchorElement | null;
+      if (!link) return;
+
+      const href = link.getAttribute('href');
+      if (!href) return;
+      if (link.target && link.target !== '_self') return;
+      if (link.hasAttribute('download') || link.dataset.noCurtain !== undefined) return;
+
+      const url = new URL(link.href, window.location.href);
+      if (url.origin !== window.location.origin) return;
+      if (/^\/(api|_next)(\/|$)/.test(url.pathname)) return;
+      if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) {
+        return; // anchor jump on same page
+      }
+
+      // Same page without hash
+      if (url.pathname === window.location.pathname && url.search === window.location.search) {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      // Internal page transition
+      e.preventDefault();
+      e.stopPropagation();
+
+      clearAllTimeouts();
+      targetUrlRef.current = url.pathname + url.search + url.hash;
+
+      setCurtainState('covering');
+      if (typeof document !== 'undefined') {
+        document.documentElement.dataset.curtain = 'covering';
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('tp:navigate'));
+      }
+
+      addTimeout(() => {
+        setCurtainState('covered');
+        if (targetUrlRef.current) {
+          router.push(targetUrlRef.current);
+        }
+      }, 320);
+
+      // Fallback in case route change doesn't trigger pathname change
+      addTimeout(() => {
+        setCurtainState('lifting');
+        addTimeout(() => {
+          setCurtainState('idle');
+          if (typeof document !== 'undefined') {
+            delete document.documentElement.dataset.curtain;
+          }
+        }, 460);
+      }, 5000);
+    };
+
+    document.addEventListener('click', handleClick, true);
+    return () => {
+      document.removeEventListener('click', handleClick, true);
+      clearAllTimeouts();
+    };
+  }, [router]);
+
   return (
-<div aria-hidden="true" className="tp-curtain" data-state={curtainState}>
- <div className="tp-curtain__blanket">
+    <div
+      aria-hidden="true"
+      className="tp-curtain"
+      data-state={curtainState}
+    >
+      <div className="tp-curtain__blanket">
   <svg className="tp-curtain__edge tp-curtain__edge--top" height="40" preserveAspectRatio="none" width="100%">
    <defs>
     <pattern height="40" id="tp-curtain-scallop" patternUnits="userSpaceOnUse" width="76">
@@ -149,7 +268,6 @@ export const RouteCurtain: React.FC = () => {
    
   </svg>
  </div>
-</div>
-
+    </div>
   );
 };

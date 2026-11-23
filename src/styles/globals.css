@@ -41,3 +41,72 @@ main {
     cursor: url(/cursor/paw-press.svg) 9 6, pointer;
   }
 }
+
+
+/* Top-Down Route Curtain Transition */
+.tp-curtain {
+  z-index: 9999 !important;
+  pointer-events: none;
+  visibility: hidden;
+  position: fixed !important;
+  inset: 0 !important;
+  overflow: clip !important;
+}
+
+.tp-curtain:is([data-state="intro"], [data-state="covering"], [data-state="covered"], [data-state="snap"], [data-state="lifting"]) {
+  visibility: visible !important;
+  display: block !important;
+}
+
+.tp-curtain:is([data-state="covering"], [data-state="covered"], [data-state="snap"]) {
+  pointer-events: auto !important;
+  cursor: progress !important;
+}
+
+.tp-curtain__blanket {
+  background: repeating-linear-gradient(45deg, transparent 0 46px, rgba(42, 23, 14, 0.07) 46px 48px),
+              repeating-linear-gradient(-45deg, transparent 0 46px, rgba(42, 23, 14, 0.07) 46px 48px),
+              radial-gradient(circle at 50% 46%, #fffdf8 0, transparent 60%),
+              #fbe3b4 !important;
+  will-change: transform;
+  place-items: center;
+  display: grid;
+  position: absolute;
+  inset: 0;
+  transform: translateY(calc(-100% - 44px));
+}
+
+.tp-curtain[data-state="intro"] {
+  animation: 0s linear 1.04s forwards tp-curtain-rest;
+}
+
+.tp-curtain[data-state="intro"] .tp-curtain__blanket {
+  animation: 0.48s cubic-bezier(0.65, 0, 0.3, 1) 0.56s forwards tp-curtain-lift !important;
+  transform: translate(0);
+}
+
+.tp-curtain[data-state="covering"] .tp-curtain__blanket {
+  animation: 0.32s cubic-bezier(0.22, 1, 0.36, 1) both tp-curtain-cover !important;
+}
+
+.tp-curtain:is([data-state="covered"], [data-state="snap"]) .tp-curtain__blanket {
+  transform: translate(0) !important;
+}
+
+.tp-curtain[data-state="lifting"] .tp-curtain__blanket {
+  animation: 0.46s cubic-bezier(0.65, 0, 0.3, 1) both tp-curtain-lift !important;
+}
+
+@keyframes tp-curtain-cover {
+  0% { transform: translateY(calc(-100% - 44px)); }
+  100% { transform: translate(0); }
+}
+
+@keyframes tp-curtain-lift {
+  0% { transform: translate(0); }
+  100% { transform: translateY(calc(100% + 44px)); }
+}
+
+@keyframes tp-curtain-rest {
+  to { visibility: hidden; }
+}
