@@ -113,6 +113,13 @@ main {
 
 
 /* Puppy Doors Opening & 3D Shutter leaf animation */
+/* Header Brand Styling */
+.tp-header__brand .tp-header__name,
+.tp-header__name {
+  display: inline-block !important;
+  color: var(--color-cocoa, #2a170e) !important;
+}
+
 .tp-door:not([data-open="true"]) .tp-door__leaf {
   transform: rotateY(0deg) !important;
   transition: transform 1.05s cubic-bezier(0.3, 1.32, 0.48, 1) 50ms !important;
